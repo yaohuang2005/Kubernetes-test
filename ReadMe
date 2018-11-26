@@ -1,0 +1,68 @@
+Kubernetes test environment on MacOS
+
+Components:
+(1) Docker.    (Used to create image, container)
+(2) VisualBox
+(3) Minikube. (A kubernetes will be installed on VisualBox)
+(4) Kubectl  (a client)
+
+1.install Docker Version 2.0.0.0-mac78 (28905) on Mac
+
+2.install VisualBox 5.2.22
+ 
+3.Create a node application file: app.js
+
+appconst http = require('http');
+const os = require('os');
+
+console.log("Kubia server starting...");
+
+var handler = function(request, response) {
+  console.log("Received request from " + request.connection.remoteAddress);
+  response.writeHead(200);
+  response.end("You've hit " + os.hostname() + "\n");
+};
+
+var www = http.createServer(handler);
+www.listen(8080);
+
+4.Create a dockerfile:
+
+FROM node:7
+ADD app.js /app.js
+ENTRYPOINT ["node", "app.js"]
+
+5.Build image and have a tag
+docker build -t kubia .
+docker tag kubia yaohuang/kubia
+
+You can also create a container for the image
+
+
+6.install minikube
+curl -Lo minikube https://storage.googleapis.com/minikube/releases/v0.30.0/minikube-darwin-amd64
+chmod +x minikube
+sudo mv minikube /usr/local/bin/
+
+7, start minikube witch kubernetes cluster on VisualBox
+minikube start
+
+8.install kubectl client
+curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/darwin/amd64/kubectl 
+
+chmod +x kubectl
+mv kubectl /usr/local/bin/
+
+9.check kubernetes status
+kubectl cluster-info
+
+10.deploy node.js app in Kubernetes
+kubectl run kubia --image=yaohuang/kubia --port=8080 --generator=run/v1
+
+11.check status
+kubectl get services
+
+12.access the node.js app
+minikube service kubia-http
+
+
